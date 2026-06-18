@@ -99,11 +99,14 @@ class EngagementModel:
 
     @torch.no_grad()
     def predict(self, frame_bgr: np.ndarray):
-        tensor = self.preprocess(frame_bgr)
-        logits = self.net(tensor)
-        probs  = F.softmax(logits, dim=1)[0]
-        score  = round(float(probs[CLASS_ENGAGED].item()), 4)
-        conf   = round(float(probs.max().item()), 4)
+        tensor  = self.preprocess(frame_bgr)
+        logits  = self.net(tensor)
+        # Temperature scaling: divide logits by T before softmax
+        # T > 1 softens the distribution, reducing binary 0/1 extremes
+        TEMPERATURE = 3.0
+        probs   = F.softmax(logits / TEMPERATURE, dim=1)[0]
+        score   = round(float(probs[CLASS_ENGAGED].item()), 4)
+        conf    = round(float(probs.max().item()), 4)
         return score, conf
 
 
